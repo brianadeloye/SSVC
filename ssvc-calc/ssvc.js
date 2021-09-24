@@ -1,12 +1,13 @@
 /* SSVC code for graph building */
 const _version = 4.2
 var showFullTree = false
+var ssvcv = "SSVCv2/"
 var diagonal,tree,svg,duration,root
 var treeData = []
 /* Deefault color array of possible color choices */
 var acolors = ["#28a745","#ffc107","#EE8733","#dc3545","#ff0000","#aa0000","#ff0000"]
 var lcolors = {"Track":"#28a745","Track*":"#ffc107","High":"#EE8733","Critical":"#dc3545"}
-lcolors = {"Track":"#28a745","Track*":"#ffc107","Attend":"#EE8733","Act":"#dc3545"}
+lcolors = {"Defer":"#28a745","Scheduled":"#ffc107","Out-of-cycle":"#EE8733","Immediate":"#dc3545"}
 /* These variables are for decision tree schema JSON aka SSVC Provision Schema */
 var export_schema = {decision_points: [],decisions_table: [], lang: "en",
 		     version: "2.0", title: "SSVC Provision table"}
@@ -30,52 +31,90 @@ $(function () {
 })
 var raw = [
     {name:"Exploitation",id:254,children:[],parent:null,props:"{}"},
-    {name:"Virulence:none",id:1,children:[],parent:"Exploitation",props:"{}"},
-    {name:"Virulence:poc",id:2,children:[],parent:"Exploitation",props:"{}"},
-    {name:"Virulence:active",id:3,children:[],parent:"Exploitation",props:"{}"},
-    {name:"Technical Impact:none:slow",id:4,children:[],parent:"Virulence:none",props:"{}"},
-    {name:"Technical Impact:none:rapid",id:5,children:[],parent:"Virulence:none",props:"{}"},
-    {name:"Technical Impact:poc:slow",id:6,children:[],parent:"Virulence:poc",props:"{}"},
-    {name:"Technical Impact:poc:rapid",id:7,children:[],parent:"Virulence:poc",props:"{}"},
-    {name:"Technical Impact:active:slow",id:8,children:[],parent:"Virulence:active",props:"{}"},
-    {name:"Technical Impact:active:rapid",id:9,children:[],parent:"Virulence:active",props:"{}"},
-    {"name":"Mission & Well-being:none:slow:partial","id":11,"children":[],"parent":"Technical Impact:none:slow",props:"{}"},{"name":"Mission & Well-being:none:slow:total","id":12,"children":[],"parent":"Technical Impact:none:slow",props:"{}"},{"name":"Mission & Well-being:none:rapid:partial","id":13,"children":[],"parent":"Technical Impact:none:rapid",props:"{}"},{"name":"Mission & Well-being:none:rapid:total","id":14,"children":[],"parent":"Technical Impact:none:rapid",props:"{}"},{"name":"Mission & Well-being:poc:slow:partial","id":15,"children":[],"parent":"Technical Impact:poc:slow",props:"{}"},{"name":"Mission & Well-being:poc:slow:total","id":16,"children":[],"parent":"Technical Impact:poc:slow",props:"{}"},{"name":"Mission & Well-being:poc:rapid:partial","id":17,"children":[],"parent":"Technical Impact:poc:rapid",props:"{}"},{"name":"Mission & Well-being:poc:rapid:total","id":18,"children":[],"parent":"Technical Impact:poc:rapid",props:"{}"},{"name":"Mission & Well-being:active:slow:partial","id":19,"children":[],"parent":"Technical Impact:active:slow",props:"{}"},{"name":"Mission & Well-being:active:slow:total","id":20,"children":[],"parent":"Technical Impact:active:slow",props:"{}"},{"name":"Mission & Well-being:active:rapid:partial","id":21,"children":[],"parent":"Technical Impact:active:rapid",props:"{}"},{"name":"Mission & Well-being:active:rapid:total","id":22,"children":[],"parent":"Technical Impact:active:rapid",props:"{}"},
-    {"name":"Track:none:slow:partial:low","id":24,"children":[],"parent":"Mission & Well-being:none:slow:partial",props:"{}"},
-    {"name":"Track:none:slow:partial:medium","id":25,"children":[],"parent":"Mission & Well-being:none:slow:partial",props:"{}"},
-    {"name":"Track:none:slow:partial:high","id":26,"children":[],"parent":"Mission & Well-being:none:slow:partial",props:"{}"},
-    {"name":"Track:none:slow:total:low","id":27,"children":[],"parent":"Mission & Well-being:none:slow:total",props:"{}"},
-    {"name":"Track:none:slow:total:medium","id":28,"children":[],"parent":"Mission & Well-being:none:slow:total",props:"{}"},
-    {"name":"Track*:none:slow:total:high","id":29,"children":[],"parent":"Mission & Well-being:none:slow:total",props:"{}"},
-    {"name":"Track:none:rapid:partial:low","id":30,"children":[],"parent":"Mission & Well-being:none:rapid:partial",props:"{}"},
-    {"name":"Track:none:rapid:partial:medium","id":31,"children":[],"parent":"Mission & Well-being:none:rapid:partial",props:"{}"},
-    {"name":"Attend:none:rapid:partial:high","id":32,"children":[],"parent":"Mission & Well-being:none:rapid:partial",props:"{}"},
-    {"name":"Track:none:rapid:total:low","id":33,"children":[],"parent":"Mission & Well-being:none:rapid:total",props:"{}"},
-    {"name":"Track:none:rapid:total:medium","id":34,"children":[],"parent":"Mission & Well-being:none:rapid:total",props:"{}"},
-    {"name":"Attend:none:rapid:total:high","id":35,"children":[],"parent":"Mission & Well-being:none:rapid:total",props:"{}"},
-    {"name":"Track:poc:slow:partial:low","id":36,"children":[],"parent":"Mission & Well-being:poc:slow:partial",props:"{}"},
-    {"name":"Track:poc:slow:partial:medium","id":37,"children":[],"parent":"Mission & Well-being:poc:slow:partial",props:"{}"},
-    {"name":"Track*:poc:slow:partial:high","id":38,"children":[],"parent":"Mission & Well-being:poc:slow:partial",props:"{}"},
-    {"name":"Track:poc:slow:total:low","id":39,"children":[],"parent":"Mission & Well-being:poc:slow:total",props:"{}"},
-    {"name":"Track*:poc:slow:total:medium","id":40,"children":[],"parent":"Mission & Well-being:poc:slow:total",props:"{}"},
-    {"name":"Attend:poc:slow:total:high","id":41,"children":[],"parent":"Mission & Well-being:poc:slow:total",props:"{}"},
-    {"name":"Track:poc:rapid:partial:low","id":42,"children":[],"parent":"Mission & Well-being:poc:rapid:partial",props:"{}"},
-    {"name":"Track:poc:rapid:partial:medium","id":43,"children":[],"parent":"Mission & Well-being:poc:rapid:partial",props:"{}"},
-    {"name":"Attend:poc:rapid:partial:high","id":44,"children":[],"parent":"Mission & Well-being:poc:rapid:partial",props:"{}"},
-    {"name":"Track:poc:rapid:total:low","id":45,"children":[],"parent":"Mission & Well-being:poc:rapid:total",props:"{}"},
-    {"name":"Track*:poc:rapid:total:medium","id":46,"children":[],"parent":"Mission & Well-being:poc:rapid:total",props:"{}"},
-    {"name":"Attend:poc:rapid:total:high","id":47,"children":[],"parent":"Mission & Well-being:poc:rapid:total",props:"{}"},
-    {"name":"Track:active:slow:partial:low","id":48,"children":[],"parent":"Mission & Well-being:active:slow:partial",props:"{}"},
-    {"name":"Track:active:slow:partial:medium","id":49,"children":[],"parent":"Mission & Well-being:active:slow:partial",props:"{}"},
-    {"name":"Attend:active:slow:partial:high","id":50,"children":[],"parent":"Mission & Well-being:active:slow:partial",props:"{}"},
-    {"name":"Track:active:slow:total:low","id":51,"children":[],"parent":"Mission & Well-being:active:slow:total",props:"{}"},
-    {"name":"Attend:active:slow:total:medium","id":52,"children":[],"parent":"Mission & Well-being:active:slow:total",props:"{}"},
-    {"name":"Act:active:slow:total:high","id":53,"children":[],"parent":"Mission & Well-being:active:slow:total",props:"{}"},
-    {"name":"Attend:active:rapid:partial:low","id":54,"children":[],"parent":"Mission & Well-being:active:rapid:partial",props:"{}"},
-    {"name":"Attend:active:rapid:partial:medium","id":55,"children":[],"parent":"Mission & Well-being:active:rapid:partial",props:"{}"},
-    {"name":"Act:active:rapid:partial:high","id":56,"children":[],"parent":"Mission & Well-being:active:rapid:partial",props:"{}"},
-    {"name":"Attend:active:rapid:total:low","id":57,"children":[],"parent":"Mission & Well-being:active:rapid:total",props:"{}"},
-    {"name":"Act:active:rapid:total:medium","id":58,"children":[],"parent":"Mission & Well-being:active:rapid:total",props:"{}"},
-    {"name":"Act:active:rapid:total:high","id":59,"children":[],"parent":"Mission & Well-being:active:rapid:total",props:"{}"},
+
+    {name:"Utility:none",id:1,children:[],parent:"Exploitation",props:"{}"},
+    {name:"Utility:poc",id:2,children:[],parent:"Exploitation",props:"{}"},
+    {name:"Utility:active",id:3,children:[],parent:"Exploitation",props:"{}"},
+
+    {name:"Technical Impact:none:laborious",id:4,children:[],parent:"Utility:none",props:"{}"},
+    {name:"Technical Impact:none:efficient",id:5,children:[],parent:"Utility:none",props:"{}"},
+    {name:"Technical Impact:none:super effective",id:6,children:[],parent:"Utility:none",props:"{}"},
+
+    {name:"Technical Impact:poc:laborious",id:7,children:[],parent:"Utility:poc",props:"{}"},
+    {name:"Technical Impact:poc:efficient",id:8,children:[],parent:"Utility:poc",props:"{}"},
+    {name:"Technical Impact:poc:super effective",id:9,children:[],parent:"Utility:poc",props:"{}"},
+
+    {name:"Technical Impact:active:laborious",id:10,children:[],parent:"Utility:active",props:"{}"},
+    {name:"Technical Impact:active:efficient",id:11,children:[],parent:"Utility:active",props:"{}"},
+    {name:"Technical Impact:active:super effective",id:12,children:[],parent:"Utility:active",props:"{}"},
+
+    {"name":"Public Safety Impact:none:laborious:partial","id":13,"children":[],"parent":"Technical Impact:none:laborious",props:"{}"},
+    {"name":"Public Safety Impact:none:efficient:partial","id":14,"children":[],"parent":"Technical Impact:none:efficient",props:"{}"},
+    {"name":"Public Safety Impact:none:super effective:partial","id":15,"children":[],"parent":"Technical Impact:none:super effective",props:"{}"},
+
+    {"name":"Public Safety Impact:none:laborious:total","id":16,"children":[],"parent":"Technical Impact:none:laborious",props:"{}"},
+    {"name":"Public Safety Impact:none:effective:total","id":17,"children":[],"parent":"Technical Impact:none:efficient",props:"{}"},
+    {"name":"Public Safety Impact:none:super efficient:total","id":18,"children":[],"parent":"Technical Impact:none:super effective",props:"{}"},
+
+    {"name":"Public Safety Impact:poc:laborious:partial","id":19,"children":[],"parent":"Technical Impact:poc:laborious",props:"{}"},
+    {"name":"Public Safety Impact:poc:efficient:partial","id":20,"children":[],"parent":"Technical Impact:poc:efficient",props:"{}"},
+    {"name":"Public Safety Impact:poc:super effective:partial","id":21,"children":[],"parent":"Technical Impact:poc:super effective",props:"{}"},
+
+    {"name":"Public Safety Impact:poc:laborious:total","id":22,"children":[],"parent":"Technical Impact:poc:laborious",props:"{}"},
+    {"name":"Public Safety Impact:poc:efficient:total","id":23,"children":[],"parent":"Technical Impact:poc:efficient",props:"{}"},
+    {"name":"Public Safety Impact:poc:super effective:total","id":24,"children":[],"parent":"Technical Impact:poc:super effective",props:"{}"},
+
+    {"name":"Public Safety Impact:active:laborious:partial","id":25,"children":[],"parent":"Technical Impact:active:laborious",props:"{}"},
+    {"name":"Public Safety Impact:active:efficient:partial","id":26,"children":[],"parent":"Technical Impact:active:efficient",props:"{}"},
+    {"name":"Public Safety Impact:active:super effective:partial","id":27,"children":[],"parent":"Technical Impact:active:super effective",props:"{}"},
+    {"name":"Public Safety Impact:active:laborious:total","id":28,"children":[],"parent":"Technical Impact:active:laborious",props:"{}"},
+    {"name":"Public Safety Impact:active:efficient:total","id":29,"children":[],"parent":"Technical Impact:active:efficient",props:"{}"},
+    {"name":"Public Safety Impact:active:super effective:total","id":30,"children":[],"parent":"Technical Impact:active:super effective",props:"{}"},
+
+    {"name":"Defer:none:laborious:partial:minimal","id":31,"children":[],"parent":"Public Safety Impact:none:laborious:partial",props:"{}"},
+    {"name":"Scheduled:none:laborious:partial:significant","id":32,"children":[],"parent":"Public Safety Impact:none:laborious:partial",props:"{}"},
+    {"name":"Defer:none:laborious:total:minimal","id":33,"children":[],"parent":"Public Safety Impact:none:laborious:total",props:"{}"},
+    {"name":"Out-of-cycle:none:laborious:total:significant","id":34,"children":[],"parent":"Public Safety Impact:none:laborious:total",props:"{}"},
+
+    {"name":"Scheduled:none:efficient:partial:minimal","id":35,"children":[],"parent":"Public Safety Impact:none:efficient:partial",props:"{}"},
+    {"name":"Out-of-cycle:none:efficient:partial:significant","id":36,"children":[],"parent":"Public Safety Impact:none:efficient:partial",props:"{}"},
+    {"name":"Scheduled:none:efficient:total:minimal","id":37,"children":[],"parent":"Public Safety Impact:none:efficient:total",props:"{}"},
+    {"name":"Out-of-cycle:none:efficient:total:significant","id":38,"children":[],"parent":"Public Safety Impact:none:efficient:total",props:"{}"},
+
+    {"name":"Scheduled:none:super effective:partial:minimal","id":39,"children":[],"parent":"Public Safety Impact:none:super effective:partial",props:"{}"},
+    {"name":"Out-of-cycle:none:super effective:partial:significant","id":40,"children":[],"parent":"Public Safety Impact:none:super effective:partial",props:"{}"},
+    {"name":"Scheduled:none:super effective:total:minimal","id":41,"children":[],"parent":"Public Safety Impact:none:super effective:total",props:"{}"},
+    {"name":"Out-of-cycle:none:super effective:total:significant","id":42,"children":[],"parent":"Public Safety Impact:none:super effective:total",props:"{}"},
+
+    {"name":"Scheduled:poc:laborious:partial:minimal","id":43,"children":[],"parent":"Public Safety Impact:poc:laborious:partial",props:"{}"},
+    {"name":"Out-of-cycle:poc:laborious:partial:significant","id":44,"children":[],"parent":"Public Safety Impact:poc:laborious:partial",props:"{}"},
+    {"name":"Scheduled:poc:laborious:total:minimal","id":45,"children":[],"parent":"Public Safety Impact:poc:laborious:total",props:"{}"},
+    {"name":"Immediate:poc:laborious:total:significant","id":46,"children":[],"parent":"Public Safety Impact:poc:laborious:total",props:"{}"},
+
+    {"name":"Scheduled:poc:efficient:partial:minimal","id":47,"children":[],"parent":"Public Safety Impact:poc:efficient:partial",props:"{}"},
+    {"name":"Immediate:poc:efficient:partial:significant","id":48,"children":[],"parent":"Public Safety Impact:poc:efficient:partial",props:"{}"},
+    {"name":"Out-of-cycle:poc:efficient:total:minimal","id":49,"children":[],"parent":"Public Safety Impact:poc:efficient:total",props:"{}"},
+    {"name":"Immediate:poc:efficient:total:significant","id":50,"children":[],"parent":"Public Safety Impact:poc:efficient:total",props:"{}"},
+
+    {"name":"Out-of-cycle:poc:super effective:partial:minimal","id":51,"children":[],"parent":"Public Safety Impact:poc:super effective:partial",props:"{}"},
+    {"name":"Immediate:poc:super effective:partial:significant","id":52,"children":[],"parent":"Public Safety Impact:poc:super effective:partial",props:"{}"},
+    {"name":"Out-of-cycle:poc:super effective:total:minimal","id":53,"children":[],"parent":"Public Safety Impact:poc:super effective:total",props:"{}"},
+    {"name":"Immediate:poc:super effective:total:significant","id":54,"children":[],"parent":"Public Safety Impact:poc:super effective:total",props:"{}"},
+
+    {"name":"Out-of-cycle:active:laborious:partial:minimal","id":55,"children":[],"parent":"Public Safety Impact:active:laborious:partial",props:"{}"},
+    {"name":"Immediate:active:laborious:partial:significant","id":56,"children":[],"parent":"Public Safety Impact:active:laborious:partial",props:"{}"},
+    {"name":"Out-of-cycle:active:laborious:total:minimal","id":57,"children":[],"parent":"Public Safety Impact:active:laborious:total",props:"{}"},
+    {"name":"Immediate:active:laborious:total:significant","id":58,"children":[],"parent":"Public Safety Impact:active:laborious:total",props:"{}"},
+
+    {"name":"Out-of-cycle:active:efficient:partial:minimal","id":59,"children":[],"parent":"Public Safety Impact:active:efficient:partial",props:"{}"},
+    {"name":"Immediate:active:efficient:partial:significant","id":60,"children":[],"parent":"Public Safety Impact:active:efficient:partial",props:"{}"},
+    {"name":"Out-of-cycle:active:efficient:total:minimal","id":61,"children":[],"parent":"Public Safety Impact:active:efficient:total",props:"{}"},
+    {"name":"Immediate:active:efficient:total:significant","id":62,"children":[],"parent":"Public Safety Impact:active:efficient:total",props:"{}"},
+
+    {"name":"Immediate:active:super effective:partial:minimal","id":63,"children":[],"parent":"Public Safety Impact:active:super effective:partial",props:"{}"},
+    {"name":"Immediate:active:super effective:partial:significant","id":64,"children":[],"parent":"Public Safety Impact:active:super effective:partial",props:"{}"},
+    {"name":"Immediate:active:super effective:total:minimal","id":65,"children":[],"parent":"Public Safety Impact:active:super effective:total",props:"{}"},
+    {"name":"Immediate:active:super effective:total:significant","id":66,"children":[],"parent":"Public Safety Impact:active:super effective:total",props:"{}"},
 
 ]
 
@@ -114,18 +153,42 @@ function usage_privacy() {
     var title = 'Usage and Privacy'
     swal(title,msg)
 }
-function calculate_mwb() {
-    var options = ["Low","Medium","High"]
-    var mp = parseInt($('#mp').val())
-    var wb = parseInt($('#wb').val())
-    var result = options[Math.max(mp,wb)]
-    var xcolor={"Low":"text-success","Medium":"text-warning","High":"text-danger"}
-    $('#wscore').removeClass().addClass(xcolor[result]).html(result)
-    $('#wsdiv').show()
+function calculate_utility() {
+    var options = ["laborious","efficient","super effective"]
+    var automatable = parseInt($('#mp').val())
+    var value_density = parseInt($('#wb').val())
+    var result = options[automatable+value_density]
+    var xcolor={"laborious":"text-success","efficient":"text-warning","super effective":"text-danger"}
+    $('#uscore').removeClass().addClass(xcolor[result]).html(result)
+    $('#udiv').show()
     $('circle[nameid="'+result.toLowerCase()+'"]').parent().simClick()
-    $('#wsdiv').fadeOut('slow')
+    $('#udiv').fadeOut('slow')
     setTimeout(function() {
-	$('#mwb').modal('hide')
+	$('#utility').modal('hide')
+	//var ptranslate = "translate(120,-250)"
+	//if(window.innerWidth <= 1000)
+	//    ptranslate = "translate(30,-90) scale(0.4,0.4)"
+	//d3.select("#pgroup").transition()
+	//    .duration(600).attr("transform", ptranslate)
+	//export_show()
+    }, 900)
+}
+function calculate_public_safety() {
+    var options = ["minimal","significant"]
+    var safety_impact = parseInt($('#psi').val())
+    var result = options[0]
+    if (safety_impact <= 1) {
+      result = options[0]
+    }else if (safety_impact > 1) {
+      result = options[1]
+    }
+    var xcolor={"minimal":"text-success","significant":"text-danger"}
+    $('#psiscore').removeClass().addClass(xcolor[result]).html(result)
+    $('#psidiv').show()
+    $('circle[nameid="'+result.toLowerCase()+'"]').parent().simClick()
+    $('#psidiv').fadeOut('slow')
+    setTimeout(function() {
+	$('#public_safety').modal('hide')
 	var ptranslate = "translate(120,-250)"
 	if(window.innerWidth <= 1000)
 	    ptranslate = "translate(30,-90) scale(0.4,0.4)"
@@ -133,13 +196,12 @@ function calculate_mwb() {
 	    .duration(600).attr("transform", ptranslate)
 	export_show()
     }, 900)
-    
 }
 function export_show() {
     var q = $('#exporter').html()
     $('#graph').append(q)
-    if($('#cve_samples').val().match(/^(cve|vu)/i))
-	$('.exportId').val($('#cve_samples').val())
+    //if($('#cve_samples').val().match(/^(cve|vu)/i))
+//	$('.exportId').val($('#cve_samples').val())
 }
 function export_tree() {
     /* First column is the decision in this tree */
@@ -185,6 +247,7 @@ function export_tree() {
    {"TechnicalImpact":"laborious"},{"SafetyImpact":"none"},
    {"Decision":"defer"}]" */
 }
+
 function export_vul(includetree) {
     var tstamp = new Date()
     var oexport = { timestamp: tstamp.toISOString(),
@@ -588,7 +651,7 @@ function generate_uuid() {
 
 function draw_graph() {
     var margin = {top: 20, right: 120, bottom: 20, left: 120},
-	width = 1000 - margin.right - margin.left,
+	width = 1100 - margin.right - margin.left,
 	height = 800 - margin.top - margin.bottom
     if(showFullTree) {
 	var add_offset = 0
@@ -851,7 +914,7 @@ function showdiv(d) {
 	name = $(this).find("text").text()
     else 
 	name = $(this).parent().find("text").text()
-    //name=name.replace(/\W/g,'_')
+    name=name.replace(/\W/g,'_')
     //console.log(name)
     //console.log(vul_data)
     var addons = ''
@@ -892,11 +955,32 @@ function doclick(d) {
 	}
 	$('.pathlink').remove()
 	if(('name' in d) &&
-	   (d.name.indexOf("Mission ") == 0) ) {
+	   (d.name.indexOf("Utility") == 0) ) {
 	    $('#wb').val(0)
 	    $('#mp').val(0)
-	    $('#mwb').modal()
+	    $('#utility').modal()
 	}
+	if(('name' in d) &&
+	   (d.name.indexOf("Public") == 0) ) {
+	    $('#psi').val(0)
+	    $('#public_safety').modal()
+	}
+	if(('parent' in d) &&
+	   (d.parent !== null) && d.parent.name.indexOf("Public") == 0) {
+	   ssvcv = "SSVCv2/"
+           // computed = computed + k[0].toUpperCase()+":"+vals[i][0].toUpperCase()+"/"
+           // Defer:none:laborious:partial:minimal
+           var svals = d.name.split(':')
+           ssvcv = ssvcv + "E" + ":"+svals[1][0].toUpperCase() + "/"
+           ssvcv = ssvcv + "U" + ":"+svals[2][0].toUpperCase() + "/"
+           ssvcv = ssvcv + "T" + ":"+svals[3][0].toUpperCase() + "/"
+           ssvcv = ssvcv + "P" + ":"+svals[4][0].toUpperCase() + "/"
+           ssvcv = ssvcv + "D" + ":"+svals[0][0].toUpperCase() + "/"
+           var tstamp = new Date()
+           ssvcv = ssvcv + String(parseInt(tstamp.getTime()/1000))+"/"
+           $('#ssvcvector').html(ssvcv)
+           $('#ssvcvectordiv').show()
+        }
 	if('id' in d) {
 	    var idl = $('[csid="'+d.id+'"]').attr("id")
 	    d3.select('#f'+idl).attr('class','chosen link')
@@ -972,6 +1056,7 @@ function showme(divid,vul_flag) {
 }
 
 function dt_start() {
+    dt_clear()
     showFullTree = false
     $('svg.mgraph').remove()
     var xraw = JSON.parse(JSON.stringify(raw))
@@ -985,6 +1070,7 @@ function dt_start() {
 }
 function dt_clear() {
     showFullTree = false
+    ssvcv = ''
     raw.map(x => {  x.children=[]; delete x._children;})
     /* Clear all graph to start */
     $('svg.mgraph').remove()
